@@ -44,7 +44,7 @@ namespace TypeSwitchTest
             }
         }
 
-        const int repeats = 5000000;
+        const int repeats = 50000000;
 
         static readonly object[] _testDataToSwitchOn =
         {
@@ -89,136 +89,178 @@ namespace TypeSwitchTest
             new C2(),
             new C1(),
         };
-
-        [TimedTest]
-        static int T1_TypeSwitch()
+        /*
+[TimedTest]
+static int T1_TypeSwitch()
+{
+    int sum = 0;
+    for (int i = 0; i < repeats; i++)
+    {
+        foreach (var d in _testDataToSwitchOn)
         {
-            int sum = 0;
-            for (int i = 0; i < repeats; i++)
+            sum += d switch
             {
-                foreach (var d in _testDataToSwitchOn)
-                {
-                    sum += d switch
-                    {
-                        //C40 _ => 40,
-                        //C39 _ => 39,
-                        //C38 _ => 38,
-                        //C37 _ => 37,
-                        //C36 _ => 36,
-                        //C35 _ => 35,
-                        //C34 _ => 34,
-                        //C33 _ => 33,
-                        //C32 _ => 32,
-                        //C31 _ => 31,
-                        //C30 _ => 30,
-                        //C29 _ => 29,
-                        //C28 _ => 28,
-                        //C27 _ => 27,
-                        //C26 _ => 26,
-                        //C25 _ => 25,
-                        //C24 _ => 24,
-                        //C23 _ => 23,
-                        //C22 _ => 22,
-                        //C21 _ => 21,
-                        //C20 _ => 20,
-                        //C19 _ => 19,
-                        //C18 _ => 18,
-                        //C17 _ => 17,
-                        //C16 _ => 16,
-                        //C15 _ => 15,
-                        //C14 _ => 14,
-                        //C13 _ => 13,
-                        C12 _ => 12,
-                        C11 _ => 11,
-                        C10 x => 10,
-                        C9 x => 9,
-                        C8 x => 8,
-                        C7 x => 7,
-                        C6 x => 6,
-                        C5 x => 5,
-                        C4 x => 4,
-                        C3 x => 3,
-                        C2 x => 2,
-                        C1 x => 1,
-                        _ => -1
-                    };
-                }
-            }
-
-            return sum;
+                //C40 _ => 40,
+                //C39 _ => 39,
+                //C38 _ => 38,
+                //C37 _ => 37,
+                //C36 _ => 36,
+                //C35 _ => 35,
+                //C34 _ => 34,
+                //C33 _ => 33,
+                //C32 _ => 32,
+                //C31 _ => 31,
+                //C30 _ => 30,
+                //C29 _ => 29,
+                //C28 _ => 28,
+                //C27 _ => 27,
+                //C26 _ => 26,
+                //C25 _ => 25,
+                //C24 _ => 24,
+                //C23 _ => 23,
+                //C22 _ => 22,
+                //C21 _ => 21,
+                //C20 _ => 20,
+                //C19 _ => 19,
+                //C18 _ => 18,
+                //C17 _ => 17,
+                //C16 _ => 16,
+                //C15 _ => 15,
+                //C14 _ => 14,
+                //C13 _ => 13,
+                C12 _ => 12,
+                C11 _ => 11,
+                C10 x => 10,
+                C9 x => 9,
+                C8 x => 8,
+                C7 x => 7,
+                C6 x => 6,
+                C5 x => 5,
+                C4 x => 4,
+                C3 x => 3,
+                C2 x => 2,
+                C1 x => 1,
+                _ => -1
+            };
         }
+    }
 
-        static readonly Type[] _typesOfTypeSwitch =
+    return sum;
+}
+
+static readonly Type[] _typesOfTypeSwitch =
+{
+    //typeof(C40),
+    //typeof(C39),
+    //typeof(C38),
+    //typeof(C37),
+    //typeof(C36),
+    //typeof(C35),
+    //typeof(C34),
+    //typeof(C33),
+    //typeof(C32),
+    //typeof(C31),
+    //typeof(C30),
+    //typeof(C29),
+    //typeof(C28),
+    //typeof(C27),
+    //typeof(C26),
+    //typeof(C25),
+    //typeof(C24),
+    //typeof(C23),
+    //typeof(C22),
+    //typeof(C21),
+    //typeof(C20),
+    //typeof(C19),
+    //typeof(C18),
+    //typeof(C17),
+    //typeof(C16),
+    //typeof(C15),
+    //typeof(C14),
+    //typeof(C13),
+    typeof(C12),
+    typeof(C11),
+    typeof(C10),
+    typeof(C9),
+    typeof(C8),
+    typeof(C7),
+    typeof(C6),
+    typeof(C5),
+    typeof(C4),
+    typeof(C3),
+    typeof(C2),
+    typeof(C1),
+};
+static TypeSwitchDispatch _typeSwitchDispatch = new TypeSwitchDispatch(_typesOfTypeSwitch);
+static int _nTypesOfSwitch = _typesOfTypeSwitch.Length;
+
+[TimedTest]
+static int T2_LazyMap()
+{
+    int sum = 0;
+    for (int i = 0; i < repeats; i++)
+    {
+        foreach (var d in _testDataToSwitchOn)
         {
-            //typeof(C40),
-            //typeof(C39),
-            //typeof(C38),
-            //typeof(C37),
-            //typeof(C36),
-            //typeof(C35),
-            //typeof(C34),
-            //typeof(C33),
-            //typeof(C32),
-            //typeof(C31),
-            //typeof(C30),
-            //typeof(C29),
-            //typeof(C28),
-            //typeof(C27),
-            //typeof(C26),
-            //typeof(C25),
-            //typeof(C24),
-            //typeof(C23),
-            //typeof(C22),
-            //typeof(C21),
-            //typeof(C20),
-            //typeof(C19),
-            //typeof(C18),
-            //typeof(C17),
-            //typeof(C16),
-            //typeof(C15),
-            //typeof(C14),
-            //typeof(C13),
-            typeof(C12),
-            typeof(C11),
-            typeof(C10),
-            typeof(C9),
-            typeof(C8),
-            typeof(C7),
-            typeof(C6),
-            typeof(C5),
-            typeof(C4),
-            typeof(C3),
-            typeof(C2),
-            typeof(C1),
-        };
-        static TypeSwitchDispatch _typeSwitchDispatch = new TypeSwitchDispatch(_typesOfTypeSwitch);
-        static int _nTypesOfSwitch = _typesOfTypeSwitch.Length;
+            sum += _typeSwitchDispatch.GetIndex(d) switch
+            {
+                0 when d is C12 x => 12,
+                1 when d is C11 x => 11,
+                2 when d is C10 x => 10,
+                3 when d is C9 x => 9,
+                4 when d is C8 x => 8,
+                5 when d is C7 x => 7,
+                6 when d is C6 x => 6,
+                7 when d is C5 x => 5,
+                8 when d is C4 x => 4,
+                9 when d is C3 x => 3,
+                10 when d is C2 x => 2,
+                11 when d is C1 x => 1,
+                -1 => -1,
+                _ => throw null,
+            };
+        }
+    }
 
+    return sum;
+}
+*/
         [TimedTest]
-        static int T2_LazyMap()
+        static int T3_LazyMap()
         {
             int sum = 0;
             for (int i = 0; i < repeats; i++)
             {
                 foreach (var d in _testDataToSwitchOn)
                 {
-                    sum += _typeSwitchDispatch.GetIndex(d) switch
+                try_again:
+                    bool dotryagain = false;
+                    try
                     {
-                        0 when d is C12 x => 12,
-                        1 when d is C11 x => 11,
-                        2 when d is C10 x => 10,
-                        3 when d is C9 x => 9,
-                        4 when d is C8 x => 8,
-                        5 when d is C7 x => 7,
-                        6 when d is C6 x => 6,
-                        7 when d is C5 x => 5,
-                        8 when d is C4 x => 4,
-                        9 when d is C3 x => 3,
-                        10 when d is C2 x => 2,
-                        11 when d is C1 x => 1,
-                        -1 => -1,
-                        _ => throw null,
-                    };
+                        sum += TypeSwitchCache<MagicTuple<MagicTuple<MagicTuple<C12, C11>, MagicTuple<C10, C9>>, MagicTuple<MagicTuple<C8, C7>, MagicTuple<C6, MagicTuple<MagicTuple<C5, C4>, MagicTuple<C3, MagicTuple<C2, C1>>>>>>>.TypeSwitch(d) switch
+                        {
+                            0 when d is C12 x => 12,
+                            1 when d is C11 x => 11,
+                            2 when d is C10 x => 10,
+                            3 when d is C9 x => 9,
+                            4 when d is C8 x => 8,
+                            5 when d is C7 x => 7,
+                            6 when d is C6 x => 6,
+                            7 when d is C5 x => 5,
+                            8 when d is C4 x => 4,
+                            9 when d is C3 x => 3,
+                            10 when d is C2 x => 2,
+                            11 when d is C1 x => 1,
+                            -1 => -1,
+                            _ => throw null,
+                        };
+                    }
+                    catch (NullReferenceException)
+                    {
+                        dotryagain = true;
+                    }
+                    if (dotryagain)
+                        goto try_again;
                 }
             }
 

@@ -13,10 +13,186 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System.Collections.Generic;
 using System.Threading;
+using System.Runtime.CompilerServices;
 
 namespace System.Runtime.CompilerServices
 {
+    public class TypeSwitchLockHolder
+
+    {
+        public static object _lock = new object();
+
+    }
+    public class MagicTuple<A, B> { }
+    class ClassWithIntPtr
+    {
+        public IntPtr val;
+    }
+    public class TypeSwitchCache<T>
+    {
+        private struct Entry
+        {
+            // We use a weak reference so that dispatching on a type does not prevent it from being unloaded.
+            public IntPtr ReferenceToType;
+            public int Result;
+
+            // Use NoInlining to prevent optimization of the read
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public int GetResult() { return Result; }
+        }
+
+        // These are allocated lazily.  If GetIndex is never called, _lock and _buckets are never allocated.
+        private static Entry[] _buckets;
+        private static Type[] _types;
+        private static int _load;
+        private const int ResultOffset = -2;
+
+        private static void AddTypesFromType(Type t, List<Type> types)
+        {
+            if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(MagicTuple<,>))
+            {
+                foreach (Type nestedType in t.GetGenericArguments())
+                {
+                    AddTypesFromType(nestedType, types);
+                }
+            }
+            else
+                types.Add(t);
+        }
+
+        private static Type[] ComputeTypesList()
+        {
+            List<Type> types = new List<Type>();
+            AddTypesFromType(typeof(TypeSwitchCache<T>).GenericTypeArguments[0], types);
+            return types.ToArray();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static Entry[] GetBuckets()
+        {
+            return _buckets;
+        }
+
+        public static int TypeSwitch(object obj)
+        {
+//            ClassWithIntPtr c = unsafe.
+            Type objType = obj.GetType();
+            IntPtr typeValue = obj.GetType().TypeHandle.Value;
+            int typeHash = objType.GetHashCode();
+
+            Entry[] buckets = Volatile.Read(ref _buckets);
+            int nBuckets = buckets != null ? buckets.Length : 0;
+            int mask = nBuckets - 1;
+
+            int startBucket = typeHash & mask;
+            for (int i = 0; i < nBuckets; i++)
+            {
+                int bucket = (i + startBucket) & mask;
+                ref Entry entry = ref buckets[bucket];
+                var entryReferenceToType = entry.ReferenceToType;
+                if (entryReferenceToType == IntPtr.Zero)
+                {
+                    // not found; insert it!
+                    break;
+                }
+
+                if (entryReferenceToType == typeValue)
+                {
+                    int result = Volatile.Read(ref entry.Result);
+                    if (result != 0)
+                        return result + ResultOffset;
+                    else
+                        break;
+                }
+            }
+            return GetIndexSlow(obj);
+        }
+
+        private static int SearchInBuckets(Entry[] buckets, object obj, out bool addedItem)
+        {
+            addedItem = false;
+            Type objType = obj.GetType();
+            IntPtr typeValue = objType.TypeHandle.Value;
+            int typeHash = objType.GetHashCode();
+
+            int nBuckets = buckets.Length;
+            int mask = nBuckets - 1;
+
+            int startBucket = typeHash & mask;
+            for (int i = 0; i < nBuckets; i++)
+            {
+                int bucket = (i + startBucket) & mask;
+                ref Entry entry = ref buckets[bucket];
+                var entryReferenceToType = entry.ReferenceToType;
+                if (entryReferenceToType == IntPtr.Zero)
+                {
+                    addedItem = true;
+//                    Type objType = obj.GetType();
+                    int result = ComputeResult(objType);
+                    entry.Result = result - ResultOffset;
+                    entry.ReferenceToType = typeValue;
+                    return result;
+                }
+
+                if (entryReferenceToType == typeValue)
+                {
+                    int result = entry.GetResult();
+                    if (result != 0)
+                        return result + ResultOffset;
+                    else
+                        throw new Exception("Cannot Happen, ReferenceToType was non-null, but result was 0");
+                }
+            }
+            // Unreachable
+            return -2;
+
+        }
+
+        /// <summary>
+        /// Compute the result.
+        /// </summary>
+        private static int ComputeResult(Type type)
+        {
+            Type[] types = _types;
+            for (int i = 0, n = types.Length; i < n; i++)
+            {
+                if (types[i].IsAssignableFrom(type))
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private static int GetIndexSlow(object obj)
+        {
+            lock (TypeSwitchLockHolder._lock)
+            {
+                if (_buckets == null)
+                {
+                    _buckets = new Entry[8];
+                    _types = ComputeTypesList();
+                }
+
+                Entry[] oldBuckets = _buckets;
+
+                int result = SearchInBuckets(oldBuckets, obj, out bool addedItem);
+                if (addedItem)
+                {
+                    // Grow table if necessary
+                    if ((++_load) > (oldBuckets.Length / 4))
+                    {
+                        // This is a cache, so its free to throw out old data
+                        _buckets = new Entry[oldBuckets.Length * 2];
+                        _load = 0;
+                    }
+                }
+                return result;
+            }
+        }
+    }
+
     /// <summary>
     /// A type that computes the first type in a list of types that a given type has a reference conversion to.
     /// It can be used to efficiently implement a type switch for a large number of types.
