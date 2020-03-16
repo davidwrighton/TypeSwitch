@@ -1,4 +1,5 @@
-﻿// Copyright Neal Gafter 2019.
+﻿#define ALLTESTS
+// Copyright Neal Gafter 2019.
 
 //This program is free software: you can redistribute it and/or modify
 //it under the terms of the GNU General Public License as published by
@@ -44,7 +45,7 @@ namespace TypeSwitchTest
             }
         }
 
-        const int repeats = 50000000;
+        const int repeats = 5000000;
 
         static readonly object[] _testDataToSwitchOn =
         {
@@ -89,8 +90,8 @@ namespace TypeSwitchTest
             new C2(),
             new C1(),
         };
-        /*
-[TimedTest]
+#if ALLTESTS
+        [TimedTest]
 static int T1_TypeSwitch()
 {
     int sum = 0;
@@ -224,43 +225,184 @@ static int T2_LazyMap()
 
     return sum;
 }
-*/
+#endif
         [TimedTest]
-        static int T3_LazyMap()
+        static int T3_PrototypeWithCastsInSwitch()
         {
             int sum = 0;
             for (int i = 0; i < repeats; i++)
             {
                 foreach (var d in _testDataToSwitchOn)
                 {
-                try_again:
-                    bool dotryagain = false;
-                    try
+                    sum += TypeSwitchCache<MagicTuple<MagicTuple<MagicTuple<C12, C11>, MagicTuple<C10, C9>>, MagicTuple<MagicTuple<C8, C7>, MagicTuple<C6, MagicTuple<MagicTuple<C5, C4>, MagicTuple<C3, MagicTuple<C2, C1>>>>>>>.TypeSwitch(d) switch
                     {
-                        sum += TypeSwitchCache<MagicTuple<MagicTuple<MagicTuple<C12, C11>, MagicTuple<C10, C9>>, MagicTuple<MagicTuple<C8, C7>, MagicTuple<C6, MagicTuple<MagicTuple<C5, C4>, MagicTuple<C3, MagicTuple<C2, C1>>>>>>>.TypeSwitch(d) switch
-                        {
-                            0 when d is C12 x => 12,
-                            1 when d is C11 x => 11,
-                            2 when d is C10 x => 10,
-                            3 when d is C9 x => 9,
-                            4 when d is C8 x => 8,
-                            5 when d is C7 x => 7,
-                            6 when d is C6 x => 6,
-                            7 when d is C5 x => 5,
-                            8 when d is C4 x => 4,
-                            9 when d is C3 x => 3,
-                            10 when d is C2 x => 2,
-                            11 when d is C1 x => 1,
-                            -1 => -1,
-                            _ => throw null,
-                        };
-                    }
-                    catch (NullReferenceException)
+                        0 when d is C12 x => 12,
+                        1 when d is C11 x => 11,
+                        2 when d is C10 x => 10,
+                        3 when d is C9 x => 9,
+                        4 when d is C8 x => 8,
+                        5 when d is C7 x => 7,
+                        6 when d is C6 x => 6,
+                        7 when d is C5 x => 5,
+                        8 when d is C4 x => 4,
+                        9 when d is C3 x => 3,
+                        10 when d is C2 x => 2,
+                        11 when d is C1 x => 1,
+                        12 => -1,
+                        _ => throw null,
+                    };
+                }
+            }
+
+            return sum;
+        }
+
+        [TimedTest]
+        static int T4_PrototypeStaticsAccessOptimizedWithCastsInSwitch()
+        {
+            int sum = 0;
+            for (int i = 0; i < repeats; i++)
+            {
+                foreach (var d in _testDataToSwitchOn)
+                {
+                    sum += TypeSwitchClassWrapper.TypeSwitchCache<MagicTuple<MagicTuple<MagicTuple<C12, C11>, MagicTuple<C10, C9>>, MagicTuple<MagicTuple<C8, C7>, MagicTuple<C6, MagicTuple<MagicTuple<C5, C4>, MagicTuple<C3, MagicTuple<C2, C1>>>>>>>.TypeSwitch(d) switch
                     {
-                        dotryagain = true;
-                    }
-                    if (dotryagain)
-                        goto try_again;
+                        0 when d is C12 x => 12,
+                        1 when d is C11 x => 11,
+                        2 when d is C10 x => 10,
+                        3 when d is C9 x => 9,
+                        4 when d is C8 x => 8,
+                        5 when d is C7 x => 7,
+                        6 when d is C6 x => 6,
+                        7 when d is C5 x => 5,
+                        8 when d is C4 x => 4,
+                        9 when d is C3 x => 3,
+                        10 when d is C2 x => 2,
+                        11 when d is C1 x => 1,
+                        12 => -1,
+                        _ => throw null,
+                    };
+                }
+            }
+
+            return sum;
+        }
+
+        [TimedTest]
+        static int T5_PrototypeStaticsAccessOptimizedAssumeCastElide()
+        {
+            int sum = 0;
+            for (int i = 0; i < repeats; i++)
+            {
+                foreach (var d in _testDataToSwitchOn)
+                {
+                    sum += TypeSwitchClassWrapper.TypeSwitchCache<MagicTuple<MagicTuple<MagicTuple<C12, C11>, MagicTuple<C10, C9>>, MagicTuple<MagicTuple<C8, C7>, MagicTuple<C6, MagicTuple<MagicTuple<C5, C4>, MagicTuple<C3, MagicTuple<C2, C1>>>>>>>.TypeSwitch(d) switch
+                    {
+                        0 => 12,
+                        1 => 11,
+                        2 => 10,
+                        3 => 9,
+                        4 => 8,
+                        5 => 7,
+                        6 => 6,
+                        7 => 5,
+                        8 => 4,
+                        9 => 3,
+                        10 => 2,
+                        11 => 1,
+                        12 => -1,
+                        _ => throw null,
+                    };
+                }
+            }
+
+            return sum;
+        }
+
+        [TimedTest]
+        static int T6_PrototypeStaticsAccessOptimizedNullCheckOptimizedWithCastsInSwitch()
+        {
+            int sum = 0;
+            for (int i = 0; i < repeats; i++)
+            {
+                foreach (var d in _testDataToSwitchOn)
+                {
+                    sum += TypeSwitchClassWrapperNoNullChecking.TypeSwitchCache<MagicTuple<MagicTuple<MagicTuple<C12, C11>, MagicTuple<C10, C9>>, MagicTuple<MagicTuple<C8, C7>, MagicTuple<C6, MagicTuple<MagicTuple<C5, C4>, MagicTuple<C3, MagicTuple<C2, C1>>>>>>>.TypeSwitch(d) switch
+                    {
+                        0 when d is C12 x => 12,
+                        1 when d is C11 x => 11,
+                        2 when d is C10 x => 10,
+                        3 when d is C9 x => 9,
+                        4 when d is C8 x => 8,
+                        5 when d is C7 x => 7,
+                        6 when d is C6 x => 6,
+                        7 when d is C5 x => 5,
+                        8 when d is C4 x => 4,
+                        9 when d is C3 x => 3,
+                        10 when d is C2 x => 2,
+                        11 when d is C1 x => 1,
+                        12 => -1,
+                    };
+                }
+            }
+
+            return sum;
+        }
+
+        [TimedTest]
+        static int T7_PrototypeStaticsAccessOptimizedNullCheckOptimizedAssumeCastElide()
+        {
+            int sum = 0;
+            for (int i = 0; i < repeats; i++)
+            {
+                foreach (var d in _testDataToSwitchOn)
+                {
+                    sum += TypeSwitchClassWrapperNoNullChecking.TypeSwitchCache<MagicTuple<MagicTuple<MagicTuple<C12, C11>, MagicTuple<C10, C9>>, MagicTuple<MagicTuple<C8, C7>, MagicTuple<C6, MagicTuple<MagicTuple<C5, C4>, MagicTuple<C3, MagicTuple<C2, C1>>>>>>>.TypeSwitch(d) switch
+                    {
+                        0 => 12,
+                        1 => 11,
+                        2 => 10,
+                        3 => 9,
+                        4 => 8,
+                        5 => 7,
+                        6 => 6,
+                        7 => 5,
+                        8 => 4,
+                        9 => 3,
+                        10 => 2,
+                        11 => 1,
+                        12 => -1,
+                    };
+                }
+            }
+
+            return sum;
+        }
+
+        [TimedTest]
+        static int T8_PrototypeStaticsAccessOptimizedNullCheckOptimizedPrimeNumberSizedTableAssumeCastElide()
+        {
+            int sum = 0;
+            for (int i = 0; i < repeats; i++)
+            {
+                foreach (var d in _testDataToSwitchOn)
+                {
+                    sum += TypeSwitchClassWrapperNoNullChecking_PrimeNumberHashtableSize.TypeSwitchCache<MagicTuple<MagicTuple<MagicTuple<C12, C11>, MagicTuple<C10, C9>>, MagicTuple<MagicTuple<C8, C7>, MagicTuple<C6, MagicTuple<MagicTuple<C5, C4>, MagicTuple<C3, MagicTuple<C2, C1>>>>>>>.TypeSwitch(d) switch
+                    {
+                        0 => 12,
+                        1 => 11,
+                        2 => 10,
+                        3 => 9,
+                        4 => 8,
+                        5 => 7,
+                        6 => 6,
+                        7 => 5,
+                        8 => 4,
+                        9 => 3,
+                        10 => 2,
+                        11 => 1,
+                        12 => -1,
+                    };
                 }
             }
 
